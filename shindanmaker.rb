@@ -5,21 +5,29 @@ require 'uri'
 require 'nokogiri'
 
 Plugin.create(:shindanmaker) do
-  Gtk::TimeLine.addopenway(/^http:\/\/shindanmaker.com\/[0-9]+/) { |shrinked_url, cancel|
+  UserConfig[:shindanmaker_timeout] ||= 10
+
+  Gtk::TimeLine.addopenway(/^http:\/\/shindanmaker\.com\/[0-9]+/) { |shrinked_url, cancel|
     url = MessageConverters.expand_url_one(shrinked_url)
+    shindan_num = url.match(/^http:\/\/shindanmaker\.com\/([0-9]+)/)[1]
     name = Post.services.first.user
+
     Delayer.new(Delayer::NORMAL) {
       widget = Gtk::PostBox.list.first.widget_post
       widget.buffer.text = "(診断中)"
       widget.sensitive = false
       Thread.new {
         begin
-          res = Net::HTTP.post_form(URI.parse(url), {'u' => name})
-          doc = Nokogiri::HTML::parse(res.body)
-          txt = doc.xpath('//textarea').first.inner_text
-          widget.buffer.text = txt
+          Net::HTTP.start('shindanmaker.com') do |http|
+            http.read_timeout = UserConfig[:shindanmaker_timeout].to_i
+            res = http.post("/#{shindan_num}", "u=#{name}")
+            doc = Nokogiri::HTML::parse(res.body)
+            txt = doc.xpath('//textarea').first.inner_text
+            widget.buffer.text = txt
+          end
         rescue
-          notice "shindan failed: #{url}"
+          notice "shindan failed: #{url}, #{$!}"
+          Plugin.call(:rewindstatus, "診断がタイムアウトしました")
           widget.buffer.text = ""
         ensure
           widget.sensitive = true
@@ -27,4 +35,8 @@ Plugin.create(:shindanmaker) do
       }
     }
   }
+
+  settings("診断メーカー") do
+    adjustment("タイムアウト(sec)", :shindanmaker_timeout, 0, 60)
+  end
 end
