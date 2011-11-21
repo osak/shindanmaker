@@ -9,8 +9,12 @@ Plugin.create(:shindanmaker) do
 
   Gtk::TimeLine.addopenway(/^http:\/\/shindanmaker\.com\/[0-9]+/) { |shrinked_url, cancel|
     url = MessageConverters.expand_url_one(shrinked_url)
-    notice url
-    shindan_num = url.match(/^http:\/\/shindanmaker\.com\/([0-9]+)/)[1]
+    match = url.match(/^http:\/\/shindanmaker\.com\/([0-9]+)/)
+    if match.size < 2
+      Plugin.call(:rewindstatus, "診断URLが取得できませんでした")
+      return cancel
+    end
+    shindan_num = match[1]
     name = Post.services.first.user
 
     Delayer.new(Delayer::NORMAL) {
