@@ -9,6 +9,7 @@ Plugin.create(:shindanmaker) do
 
   Gtk::TimeLine.addopenway(/^http:\/\/shindanmaker\.com\/[0-9]+/) { |shrinked_url, cancel|
     url = MessageConverters.expand_url_one(shrinked_url)
+    notice url
     shindan_num = url.match(/^http:\/\/shindanmaker\.com\/([0-9]+)/)[1]
     name = Post.services.first.user
 
