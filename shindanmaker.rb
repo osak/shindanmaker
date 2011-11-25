@@ -1,5 +1,5 @@
 #-*- coding: utf-8
-miquire :core, 'plugin'
+
 require 'net/http'
 require 'uri'
 require 'nokogiri'
@@ -21,7 +21,11 @@ Plugin.create(:shindanmaker) do
     name = Post.services.first.user
 
     Delayer.new(Delayer::NORMAL) {
-      widget = Gtk::PostBox.list.first.widget_post
+      postboxes = Plugin.filtering(:main_postbox, nil).first
+      postbox = Gtk::PostBox.new(Post.primary_service,
+                                postboxstorage: postboxes)
+      widget = postbox.widget_post
+      postboxes.pack_start(postbox).show_all.get_ancestor(Gtk::Window).set_focus(widget)
       widget.buffer.text = "(診断中)"
       widget.sensitive = false
       Thread.new {
@@ -32,6 +36,8 @@ Plugin.create(:shindanmaker) do
             doc = Nokogiri::HTML::parse(res.body)
             txt = doc.xpath('//textarea').first.inner_text
             widget.buffer.text = txt
+            if postbox.respond_to? :refresh_buttons # 0.0.4以前でも動作するように
+              postbox.refresh_buttons end
           end
         rescue
           notice "shindan failed: #{url}, #{$!}"
