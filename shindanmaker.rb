@@ -22,7 +22,7 @@ Plugin.create(:shindanmaker) do
 
     Delayer.new(Delayer::NORMAL) {
       postboxes = Plugin.filtering(:main_postbox, nil).first
-      postbox = Gtk::PostBox.new(Post.primary_service,
+      postbox = Gtk::ServiceBox.new(Post.primary_service,
                                 postboxstorage: postboxes)
       widget = postbox.widget_post
       postboxes.pack_start(postbox).show_all.get_ancestor(Gtk::Window).set_focus(widget)
