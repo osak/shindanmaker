@@ -7,6 +7,8 @@ require 'nokogiri'
 Plugin.create(:shindanmaker) do
   UserConfig[:shindanmaker_timeout] ||= 10
 
+  Gtk::ServiceBox = Gtk::PostBox unless defined? Gtk::ServiceBox # rev.644で名前が変わったため対応
+
   Gtk::TimeLine.addopenway(/^http:\/\/shindanmaker\.com\/[0-9]+/) { |shrinked_url, cancel|
     url = MessageConverters.expand_url_one(shrinked_url)
     notice url
