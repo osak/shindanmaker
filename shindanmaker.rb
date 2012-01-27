@@ -6,6 +6,7 @@ require 'nokogiri'
 
 Plugin.create(:shindanmaker) do
   UserConfig[:shindanmaker_timeout] ||= 10
+  UserConfig[:shindanmaker_name] ||= Post.services.first.user
 
   Gtk::ServiceBox = Gtk::PostBox unless defined? Gtk::ServiceBox # rev.644で名前が変わったため対応
 
@@ -20,7 +21,7 @@ Plugin.create(:shindanmaker) do
       cancel.call
       break
     end
-    name = Post.services.first.user
+    name = UserConfig[:shindanmaker_name]
 
     Delayer.new(Delayer::NORMAL) {
       postboxes = Plugin.filtering(:main_postbox, nil).first
@@ -54,5 +55,6 @@ Plugin.create(:shindanmaker) do
 
   settings("診断メーカー") do
     adjustment("タイムアウト(sec)", :shindanmaker_timeout, 0, 60)
+    input("ゆーざーねーむ",:shindanmaker_name)
   end
 end
