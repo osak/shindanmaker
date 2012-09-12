@@ -25,6 +25,7 @@ Plugin.create(:shindanmaker) do
     # Postboxをトップレベルウィンドウに追加してから実体が取得可能になるには，Pluginの発火を待たないといけない．
     # よって診断番号だけ保存しておいて，Postboxが登録完了してから診断を開始するようにする．
     i_postbox = Plugin::GUI::Postbox.instance
+    i_postbox.options[:postboxstorage] = nil
     @main_window << i_postbox
     @shindan_num_of[i_postbox] = shindan_num
   }
