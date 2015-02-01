@@ -6,13 +6,11 @@ require 'nokogiri'
 
 Plugin.create(:shindanmaker) do
   UserConfig[:shindanmaker_timeout] ||= 10
-  UserConfig[:shindanmaker_name] ||= Post.services.first.user
+  UserConfig[:shindanmaker_name] ||= Service.primary.user rescue nil
   @main_window = nil
   @shindan_num_of = {}
 
-  Gtk::TimeLine.addopenway(/^http:\/\/shindanmaker\.com\/[0-9]+/) { |shrinked_url, cancel|
-    url = MessageConverters.expand_url_one(shrinked_url)
-    notice url
+  Gtk::TimeLine.addopenway(/^http:\/\/shindanmaker\.com\/[0-9]+/) { |url, cancel|
     begin
       match = url.to_s.match(/^http:\/\/shindanmaker\.com\/([0-9]+)/)
       shindan_num = match[1]
@@ -25,7 +23,7 @@ Plugin.create(:shindanmaker) do
     # Postboxをトップレベルウィンドウに追加してから実体が取得可能になるには，Pluginの発火を待たないといけない．
     # よって診断番号だけ保存しておいて，Postboxが登録完了してから診断を開始するようにする．
     i_postbox = Plugin::GUI::Postbox.instance
-    i_postbox.options[:postboxstorage] = nil
+    i_postbox.options[:delegate_other] = false
     @main_window << i_postbox
     @shindan_num_of[i_postbox] = shindan_num
   }
