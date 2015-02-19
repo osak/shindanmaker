@@ -42,6 +42,9 @@ Plugin.create(:shindanmaker) do
       Plugin.activity(:error, "Postboxを取得できませんでした．")
       next
     end
+    class << postbox
+      def destructible?; true; end
+    end
     widget = postbox.widget_post
     widget.buffer.text = "(診断中)"
     widget.sensitive = false
