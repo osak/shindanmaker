@@ -1,6 +1,6 @@
 #-*- coding: utf-8
 
-require 'net/http'
+require 'net/https'
 require 'uri'
 require 'nokogiri'
 
@@ -10,9 +10,9 @@ Plugin.create(:shindanmaker) do
   @main_window = nil
   @shindan_num_of = {}
 
-  Gtk::TimeLine.addopenway(/^http:\/\/shindanmaker\.com\/[0-9]+/) { |url, cancel|
+  Gtk::TimeLine.addopenway(/^https?:\/\/shindanmaker\.com\/[0-9]+/) { |url, cancel|
     begin
-      match = url.to_s.match(/^http:\/\/shindanmaker\.com\/([0-9]+)/)
+      match = url.to_s.match(/^https?:\/\/shindanmaker\.com\/([0-9]+)/)
       shindan_num = match[1]
     rescue
       Plugin.activity(:error, "診断URLが処理できない形式です： #{url}")
@@ -50,8 +50,10 @@ Plugin.create(:shindanmaker) do
     widget.sensitive = false
     Thread.new {
       begin
-        Net::HTTP.start('shindanmaker.com') do |http|
-          http.read_timeout = UserConfig[:shindanmaker_timeout].to_i
+        http = Net::HTTP.new('shindanmaker.com', 443)
+        http.use_ssl = true
+        http.read_timeout = UserConfig[:shindanmaker_timeout].to_i
+        http.start do
           res = http.post("/#{shindan_num}", "u=#{UserConfig[:shindanmaker_name]}")
           doc = Nokogiri::HTML::parse(res.body)
           txt = doc.xpath('//textarea').first.inner_text
