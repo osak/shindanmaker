@@ -4,29 +4,41 @@ require 'net/https'
 require 'uri'
 require 'nokogiri'
 
+require_relative 'model' if Environment::VERSION >= [3, 6, 0, 0]
+
 Plugin.create(:shindanmaker) do
   UserConfig[:shindanmaker_timeout] ||= 10
   UserConfig[:shindanmaker_name] ||= Service.primary.user rescue nil
   @main_window = nil
   @shindan_num_of = {}
 
-  Gtk::TimeLine.addopenway(/^https?:\/\/shindanmaker\.com\/[0-9]+/) { |url, cancel|
-    begin
-      match = url.to_s.match(/^https?:\/\/shindanmaker\.com\/([0-9]+)/)
-      shindan_num = match[1]
-    rescue
-      Plugin.activity(:error, "診断URLが処理できない形式です： #{url}")
-      cancel.call
-      next
-    end
-
+  def start_shindan(shindan_num)
     # Postboxをトップレベルウィンドウに追加してから実体が取得可能になるには，Pluginの発火を待たないといけない．
     # よって診断番号だけ保存しておいて，Postboxが登録完了してから診断を開始するようにする．
     i_postbox = Plugin::GUI::Postbox.instance
     i_postbox.options[:delegate_other] = false
     @main_window << i_postbox
     @shindan_num_of[i_postbox] = shindan_num
-  }
+  end
+
+  if Environment::VERSION < [3, 6, 0, 0]
+      Gtk::TimeLine.addopenway(/^https?:\/\/shindanmaker\.com\/[0-9]+/) { |url, cancel|
+        begin
+          match = url.to_s.match(/^https?:\/\/shindanmaker\.com\/([0-9]+)/)
+          shindan_num = match[1]
+        rescue
+          Plugin.activity(:error, "診断URLが処理できない形式です： #{url}")
+          cancel.call
+          next
+        end
+
+        start_shindan(shindan_num)
+      }
+  else
+    intent Plugin::ShindanMaker::Shindan, label: '診断メーカーで診断' do |intent_token|
+      start_shindan(intent_token.model.id)
+    end
+  end
 
   on_window_created do |i_window|
     @main_window = i_window
