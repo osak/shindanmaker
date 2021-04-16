@@ -21,6 +21,13 @@ Plugin.create(:shindanmaker) do
     @shindan_num_of[i_postbox] = shindan_num
   end
 
+  def begin_session(http, shindan_num)
+    res = http.get("/#{shindan_num}")
+    cookie = res.get_fields('Set-Cookie').map { |s| s[0...s.index(';')].split('=') }.to_h
+    doc = Nokogiri::HTML::parse(res.body)
+    { cookie: cookie, token: doc.xpath('//*[@id="shindanForm"]/input[@name="_token"]').first[:value] }
+  end
+
   if Environment::VERSION < [3, 6, 0, 0]
       Gtk::TimeLine.addopenway(/^https?:\/\/shindanmaker\.com\/[0-9]+/) { |url, cancel|
         begin
@@ -66,7 +73,9 @@ Plugin.create(:shindanmaker) do
         http.use_ssl = true
         http.read_timeout = UserConfig[:shindanmaker_timeout].to_i
         http.start do
-          res = http.post("/#{shindan_num}", "u=#{UserConfig[:shindanmaker_name]}")
+          session = begin_session(http, shindan_num)
+          res = http.post("/#{shindan_num}", "name=#{UserConfig[:shindanmaker_name]}&_token=#{session[:token]}",
+                          { Cookie: session[:cookie].map { |k, v| "#{k}=#{v}" }.join('; ') })
           doc = Nokogiri::HTML::parse(res.body)
           txt = doc.xpath('//textarea').first.inner_text
           widget.buffer.text = txt
