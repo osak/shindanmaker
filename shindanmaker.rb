@@ -74,7 +74,7 @@ Plugin.create(:shindanmaker) do
         http.read_timeout = UserConfig[:shindanmaker_timeout].to_i
         http.start do
           session = begin_session(http, shindan_num)
-          res = http.post("/#{shindan_num}", "name=#{UserConfig[:shindanmaker_name]}&_token=#{session[:token]}",
+          res = http.post("/#{shindan_num}", "shindanName=#{UserConfig[:shindanmaker_name]}&_token=#{session[:token]}",
                           { Cookie: session[:cookie].map { |k, v| "#{k}=#{v}" }.join('; ') })
           doc = Nokogiri::HTML::parse(res.body)
           txt = doc.xpath('//textarea').first.inner_text
