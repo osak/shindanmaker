@@ -1,10 +1,10 @@
 ---
 slug: :shindanmaker
 depends:
-  mikutter: '3.1'
+  mikutter: '5.0'
   plugin:
   - gui
-  - gtk
+  - gtk3
 version: '1.4.0'
 author: osa_k
 name: 診断メーカー

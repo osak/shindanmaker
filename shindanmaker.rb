@@ -12,6 +12,10 @@ Plugin.create(:shindanmaker) do
   @main_window = nil
   @shindan_num_of = {}
 
+  def user_agent
+    "mikutter-shindanmaker/#{spec[:version]} (https://github.com/osak/shindanmaker)"
+  end
+
   def start_shindan(shindan_num)
     # Postboxをトップレベルウィンドウに追加してから実体が取得可能になるには，Pluginの発火を待たないといけない．
     # よって診断番号だけ保存しておいて，Postboxが登録完了してから診断を開始するようにする．
@@ -22,7 +26,7 @@ Plugin.create(:shindanmaker) do
   end
 
   def begin_session(http, shindan_num)
-    res = http.get("/#{shindan_num}")
+    res = http.get("/#{shindan_num}", { 'User-Agent': user_agent })
     cookie = res.get_fields('Set-Cookie').map { |s| s[0...s.index(';')].split('=') }.to_h
     doc = Nokogiri::HTML::parse(res.body)
     { cookie: cookie, token: doc.xpath('//*[@id="shindanForm"]/input[@name="_token"]').first[:value] }
@@ -75,7 +79,7 @@ Plugin.create(:shindanmaker) do
         http.start do
           session = begin_session(http, shindan_num)
           res = http.post("/#{shindan_num}", "shindanName=#{UserConfig[:shindanmaker_name]}&_token=#{session[:token]}",
-                          { Cookie: session[:cookie].map { |k, v| "#{k}=#{v}" }.join('; ') })
+                          { Cookie: session[:cookie].map { |k, v| "#{k}=#{v}" }.join('; '), 'User-Agent': user_agent })
           doc = Nokogiri::HTML::parse(res.body)
           txt = doc.xpath('//textarea').first.inner_text
           widget.buffer.text = txt
