@@ -8,10 +8,8 @@ mikutterから診断メーカーを自動ポストするプラグインです．
 
 INSTALL
 --------
-mikutterのpluginディレクトリに放り込んでください．
-
-mikutterの最新開発版(2012/09/10現在は0.2)を使っている人はHEADを使うことをおすすめします．
-それ以外の人は https://github.com/osak/shindanmaker/tags から自分のバージョンに合ったものを落として使ってください．
+mikutter 5.0以降でしか動きません。
+インストールするときはmikutterのpluginディレクトリに放り込んでください．
 
 診断メーカーを処理するのにnokogiriを使っているので，
 
